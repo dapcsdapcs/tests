@@ -1,9 +1,17 @@
 <?php
 session_start();
 $error = '';
-$num1 = rand(1, 10);
-$num2 = rand(1, 10);
-$_SESSION['captcha'] = $num1 + $num2;
+
+if (!isset($_SESSION['captcha'])) {
+    $num1 = rand(1, 10);
+    $num2 = rand(1, 10);
+    $_SESSION['captcha'] = $num1 + $num2;
+    $_SESSION['captcha_num1'] = $num1;
+    $_SESSION['captcha_num2'] = $num2;
+} else {
+    $num1 = $_SESSION['captcha_num1'];
+    $num2 = $_SESSION['captcha_num2'];
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim($_POST['email'] ?? '');
@@ -11,6 +19,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $captcha = intval($_POST['captcha'] ?? 0);
     if ($captcha !== $_SESSION['captcha']) {
         $error = 'Captcha yanlış.';
+        // Regenerate captcha on error
+        $num1 = rand(1, 10);
+        $num2 = rand(1, 10);
+        $_SESSION['captcha'] = $num1 + $num2;
+        $_SESSION['captcha_num1'] = $num1;
+        $_SESSION['captcha_num2'] = $num2;
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error = 'Geçerli bir e-posta girin.';
     } else {
@@ -21,6 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
             if ($row && password_verify($password, $row['password'])) {
                 $_SESSION['user'] = $row['username'];
+                unset($_SESSION['captcha'], $_SESSION['captcha_num1'], $_SESSION['captcha_num2']);
                 header('Location: index.php');
                 exit;
             }
@@ -29,10 +44,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = 'Veritabanı hatası: ' . $e->getMessage();
         }
     }
-    // Regenerate captcha on error
-    $num1 = rand(1, 10);
-    $num2 = rand(1, 10);
-    $_SESSION['captcha'] = $num1 + $num2;
 }
 ?>
 <!doctype html>
