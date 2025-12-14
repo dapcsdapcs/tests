@@ -49,6 +49,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_product']) && $u
                     <a href="login.php">Log In</a>
                 <?php else: ?>
                     <a href="#">My Account (<?php echo htmlspecialchars($user); ?>)</a>
+                    <?php if ($user === 'admin'): ?>
+                        <a href="notifications.php"><img src="notifications.png" alt="Notifications" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;"> Notifications</a>
+                    <?php endif; ?>
                     <a href="?action=logout">Log Out</a>
                 <?php endif; ?>
                 <a href="https://t.me/nijonico" target="_blank" rel="noopener">Telegram</a>
