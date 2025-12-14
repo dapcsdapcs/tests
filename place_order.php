@@ -9,18 +9,30 @@ if (!isset($_SESSION['user'])) {
     exit;
 }
 
+if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+    http_response_code(403);
+    echo json_encode(['error' => 'CSRF token mismatch']);
+    exit;
+}
+
 $user = $_SESSION['user'];
 $contactType = $_POST['contactType'] ?? '';
 $contactValue = trim($_POST['contactValue'] ?? '');
 $features = $_POST['features'] ?? '';
 $total = floatval($_POST['total'] ?? 0);
-$productId = $_POST['productId'] ?? '1';
+$productId = $_POST['productId'] ?? 'Nash3D';
 
 if (!$contactType || !$contactValue || $total <= 0) {
     http_response_code(400);
     echo json_encode(['error' => 'All fields are required.']);
     exit;
 }
+
+// Sanitize inputs
+$contactType = htmlspecialchars($contactType);
+$contactValue = htmlspecialchars($contactValue);
+$features = htmlspecialchars($features);
+$productId = htmlspecialchars($productId);
 
 // Get user ID
 $stmt = $pdo->prepare("SELECT id FROM users WHERE username = ?");

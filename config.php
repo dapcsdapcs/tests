@@ -1,4 +1,6 @@
 <?php
+error_reporting(0);
+ini_set('display_errors', 0);
 // Database configuration using a DATABASE_URL or a fallback DSN.
 // For safety prefer exporting DATABASE_URL in your environment.
 

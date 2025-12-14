@@ -1,0 +1,9 @@
+Options -Indexes
+<Files *.php>
+    Header set X-Frame-Options DENY
+    Header set X-Content-Type-Options nosniff
+    Header set Referrer-Policy strict-origin-when-cross-origin
+</Files>
+RewriteEngine On
+RewriteCond %{HTTPS} off
+RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]

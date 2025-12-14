@@ -12,15 +12,24 @@ $products = json_decode(file_get_contents('products.json'), true) ?: [
     ['id'=>'Nash3D','name'=>'Nash3D','price'=>'By Ernyzas','img'=>'https://via.placeholder.com/400x250?text=nash3d']
 ];
 
+// Generate CSRF token
+if (!isset($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+$csrf_token = $_SESSION['csrf_token'];
+
 // Handle product edit
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_product']) && $user === 'admin') {
+    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+        die('CSRF token mismatch');
+    }
     $id = $_POST['id'];
     foreach ($products as &$p) {
         if ($p['id'] == $id) {
-            $p['title'] = $_POST['title'];
-            $p['desc'] = $_POST['desc'];
-            $p['price'] = $_POST['price'];
-            $p['img'] = $_POST['img'];
+            $p['title'] = htmlspecialchars($_POST['title']);
+            $p['desc'] = htmlspecialchars($_POST['desc']);
+            $p['price'] = htmlspecialchars($_POST['price']);
+            $p['img'] = htmlspecialchars($_POST['img']);
             break;
         }
     }
@@ -140,6 +149,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_product']) && $u
         <button class="modal-close" id="closeOrderModal">&times;</button>
         <h3>Place Your Order</h3>
         <form id="orderForm">
+            <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
             <label for="contactType">Contact Platform:</label>
             <select id="contactType" name="contactType" required>
                 <option value="">Select...</option>
@@ -152,6 +162,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_product']) && $u
             <input type="hidden" id="orderFeatures" name="features">
             <input type="hidden" id="orderTotal" name="total">
             <input type="hidden" id="orderProductId" name="productId" value="Nash3D">
+            <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
             <button type="submit" class="buy-btn">Submit Order</button>
         </form>
         <div id="orderResult" class="add-result"></div>
@@ -174,6 +185,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_product']) && $u
         <button class="modal-close" id="closeEditModal">&times;</button>
         <h3>Edit Product</h3>
         <form method="post">
+            <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
             <input type="hidden" name="id" id="editId">
             <label>Title: <input type="text" name="title" id="editTitle" required></label>
             <label>Description: <textarea name="desc" id="editDesc"></textarea></label>
@@ -381,7 +393,7 @@ document.addEventListener('DOMContentLoaded', function(){
         fetch('check_order.php', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({productId: 'Nash3D'})
+            body: JSON.stringify({productId: 'Nash3D', csrf_token: '<?php echo $csrf_token; ?>'})
         })
         .then(response => response.json())
         .then(data => {

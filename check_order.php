@@ -8,6 +8,11 @@ if (!isset($_SESSION['user'])) {
     exit;
 }
 
+if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+    echo json_encode(['hasOrder' => false]);
+    exit;
+}
+
 $user = $_SESSION['user'];
 $productId = $_POST['productId'] ?? '';
 
