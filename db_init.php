@@ -51,11 +51,11 @@ try {
     echo "Orders tablo oluşturulurken hata: " . $e->getMessage() . "\n";
 }
 
-// Alter table to update enum if needed
-$alterSql = "ALTER TABLE orders MODIFY COLUMN status ENUM('pending', 'preparing', 'successful', 'declined', 'cancelled', 'paused') DEFAULT 'pending'";
+// Alter table to add ip_address if not exists
+$alterSql2 = "ALTER TABLE orders ADD COLUMN ip_address VARCHAR(45) DEFAULT NULL";
 try {
-    $pdo->exec($alterSql);
-    echo "Orders table status enum updated.\n";
+    $pdo->exec($alterSql2);
+    echo "Orders table ip_address column added.\n";
 } catch (Exception $e) {
-    echo "Alter table error: " . $e->getMessage() . "\n";
+    echo "Alter table ip_address error: " . $e->getMessage() . "\n";
 }
