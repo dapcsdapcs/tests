@@ -24,3 +24,27 @@ try {
 } catch (Exception $e) {
     echo "Tablo oluşturulurken hata: " . $e->getMessage() . "\n";
 }
+
+// Create orders table
+$sqlOrders = "
+CREATE TABLE IF NOT EXISTS orders (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT,
+  product_id VARCHAR(255),
+  features TEXT,
+  total_price DECIMAL(10,2),
+  contact_type ENUM('telegram', 'discord', 'whatsapp'),
+  contact_value VARCHAR(255),
+  status ENUM('pending', 'completed', 'cancelled') DEFAULT 'pending',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id)
+)
+ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+";
+
+try {
+    $pdo->exec($sqlOrders);
+    echo "orders tablosu oluşturuldu veya zaten mevcut.\n";
+} catch (Exception $e) {
+    echo "Orders tablo oluşturulurken hata: " . $e->getMessage() . "\n";
+}

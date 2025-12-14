@@ -147,15 +147,18 @@ button{background:#2563eb;color:#fff;border:none;padding:10px 14px;border-radius
 @media (max-width: 480px) {
 	.container{padding:0 12px}
 	.products{gap:12px}
-	.card{width:220px;max-width:calc(100% - 24px);padding:14px}
-	.card.big{width:360px;max-width:calc(100% - 24px)}
-	.trending-list .card{width:180px}
-	.site-header h1{font-size:18px}
-}
-
-@media (max-width: 360px) {
+  .card{width:200px;max-width:calc(100% - 24px);padding:12px}
+  .card.big{width:320px;max-width:calc(100% - 24px)}
+  .trending-list .card{width:160px}
 	.products{justify-content:center}
 	.card{width:100%;max-width:320px}
 	.card.big{width:100%;max-width:420px}
 	.container{margin:18px auto}
+}
+
+@media (max-width: 360px) {
+  .products{justify-content:center}
+  .card{width:180px;max-width:300px}
+  .card.big{width:280px;max-width:380px}
+  .container{margin:18px auto}
 }

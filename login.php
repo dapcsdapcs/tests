@@ -1,10 +1,17 @@
 <?php
 session_start();
 $error = '';
+$num1 = rand(1, 10);
+$num2 = rand(1, 10);
+$_SESSION['captcha'] = $num1 + $num2;
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    $captcha = intval($_POST['captcha'] ?? 0);
+    if ($captcha !== $_SESSION['captcha']) {
+        $error = 'Captcha yanlış.';
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error = 'Geçerli bir e-posta girin.';
     } else {
         try {
@@ -22,6 +29,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = 'Veritabanı hatası: ' . $e->getMessage();
         }
     }
+    // Regenerate captcha on error
+    $num1 = rand(1, 10);
+    $num2 = rand(1, 10);
+    $_SESSION['captcha'] = $num1 + $num2;
 }
 ?>
 <!doctype html>
@@ -39,6 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <form method="post" action="login.php" class="form">
         <label>E-posta<br><input type="email" name="email" value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>"></label>
         <label>Şifre<br><input type="password" name="password"></label>
+        <label>Captcha: <?php echo $num1; ?> + <?php echo $num2; ?> = <input type="number" name="captcha" required></label>
         <button type="submit">Giriş</button>
     </form>
     <p>Hesabınız yok mu? <a href="signup.php">Kayıt ol</a></p>

@@ -6,10 +6,28 @@ if (isset($_GET['action']) && $_GET['action'] === 'logout') {
     header('Location: index.php');
     exit;
 }
+require __DIR__ . '/config.php';
 $user = isset($_SESSION['user']) ? $_SESSION['user'] : null;
- $products = [
-    ['id'=>1,'name'=>'Nash3D','price'=>'By Ernyzas','img'=>'https://via.placeholder.com/400x250?text=nash3d']
+$products = json_decode(file_get_contents('products.json'), true) ?: [
+    ['id'=>'1','name'=>'Nash3D','price'=>'By Ernyzas','img'=>'https://via.placeholder.com/400x250?text=nash3d']
 ];
+
+// Handle product edit
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_product']) && $user === 'admin') {
+    $id = $_POST['id'];
+    foreach ($products as &$p) {
+        if ($p['id'] == $id) {
+            $p['title'] = $_POST['title'];
+            $p['desc'] = $_POST['desc'];
+            $p['price'] = $_POST['price'];
+            $p['img'] = $_POST['img'];
+            break;
+        }
+    }
+    file_put_contents('products.json', json_encode($products, JSON_PRETTY_PRINT));
+    header('Location: index.php');
+    exit;
+}
 ?>
 <!doctype html>
 <html lang="tr">
@@ -51,6 +69,9 @@ $user = isset($_SESSION['user']) ? $_SESSION['user'] : null;
                 <p class="bykey"><?php echo htmlspecialchars($p['price']); ?></p>
                 <div class="actions">
                     <button id="showFeaturesBtn" class="show-features">Select Features</button>
+                    <?php if ($user === 'admin'): ?>
+                        <button onclick="editProduct('<?php echo $p['id']; ?>')" class="show-features">Edit Product</button>
+                    <?php endif; ?>
                 </div>
                 <div id="featureDetails" class="feature-details" aria-hidden="true" style="display:none;">
                     <h4>Cheat Features (select to add)</h4>
@@ -77,7 +98,7 @@ $user = isset($_SESSION['user']) ? $_SESSION['user'] : null;
                     <span class="base-price" data-base="0">Base: $0</span>
                     <span class="selected-price">Selected: $0</span>
                     <span class="total-price">Total: $0</span>
-                    <a id="placeOrderBtn" class="buy-btn" href="https://t.me/nijonico" target="_blank" rel="noopener">Place Order</a>
+                    <button id="placeOrderBtn" class="buy-btn" disabled>Place Order</button>
                 </div>
 
                 <div class="payment-options">
@@ -100,6 +121,46 @@ $user = isset($_SESSION['user']) ? $_SESSION['user'] : null;
 
     <!-- Add Product feature removed -->
 </main>
+
+<!-- Order Modal -->
+<div id="orderModal" class="modal" aria-hidden="true">
+    <div class="modal-content">
+        <button class="modal-close" id="closeOrderModal">&times;</button>
+        <h3>Place Your Order</h3>
+        <form id="orderForm">
+            <label for="contactType">Contact Platform:</label>
+            <select id="contactType" name="contactType" required>
+                <option value="">Select...</option>
+                <option value="telegram">Telegram</option>
+                <option value="discord">Discord</option>
+                <option value="whatsapp">WhatsApp</option>
+            </select>
+            <label for="contactValue">Profile Link / Number:</label>
+            <input type="text" id="contactValue" name="contactValue" placeholder="e.g. @username or +1234567890" required>
+            <input type="hidden" id="orderFeatures" name="features">
+            <input type="hidden" id="orderTotal" name="total">
+            <input type="hidden" id="orderProductId" name="productId" value="1">
+            <button type="submit" class="buy-btn">Submit Order</button>
+        </form>
+        <div id="orderResult" class="add-result"></div>
+    </div>
+</div>
+
+<!-- Edit Product Modal -->
+<div id="editModal" class="modal" aria-hidden="true">
+    <div class="modal-content">
+        <button class="modal-close" id="closeEditModal">&times;</button>
+        <h3>Edit Product</h3>
+        <form method="post">
+            <input type="hidden" name="id" id="editId">
+            <label>Title: <input type="text" name="title" id="editTitle" required></label>
+            <label>Description: <textarea name="desc" id="editDesc"></textarea></label>
+            <label>Price: <input type="text" name="price" id="editPrice"></label>
+            <label>Image URL: <input type="text" name="img" id="editImg"></label>
+            <button type="submit" name="edit_product">Save</button>
+        </form>
+    </div>
+</div>
 
 <footer class="site-footer">
 </footer>
@@ -276,6 +337,73 @@ document.addEventListener('DOMContentLoaded', function(){
         details.style.display = hidden ? 'block' : 'none';
         btn.textContent = hidden ? 'Hide Features' : 'Select Features';
         if (hidden) details.scrollIntoView({behavior:'smooth', block:'center'});
+    });
+})();
+
+// Order Modal
+(function(){
+    var modal = document.getElementById('orderModal');
+    var btn = document.getElementById('placeOrderBtn');
+    var closeBtn = document.getElementById('closeOrderModal');
+    var form = document.getElementById('orderForm');
+    var result = document.getElementById('orderResult');
+
+    if (!modal || !btn || !closeBtn || !form) return;
+
+    btn.addEventListener('click', function(){
+        if (btn.disabled) return;
+        // Populate hidden fields
+        var features = Array.from(document.querySelectorAll('.feature-item input:checked')).map(function(c){ return c.getAttribute('data-name'); }).join(', ');
+        var total = document.querySelector('.total-price').textContent.replace('Total: $', '');
+        document.getElementById('orderFeatures').value = features;
+        document.getElementById('orderTotal').value = total;
+        modal.setAttribute('aria-hidden', 'false');
+    });
+
+    closeBtn.addEventListener('click', function(){
+        modal.setAttribute('aria-hidden', 'true');
+    });
+
+    form.addEventListener('submit', function(e){
+        e.preventDefault();
+        var formData = new FormData(form);
+        fetch('place_order.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            result.textContent = data.message || data.error;
+            if (data.success) {
+                setTimeout(function(){ modal.setAttribute('aria-hidden', 'true'); form.reset(); }, 2000);
+            }
+        })
+        .catch(error => {
+            result.textContent = 'Error: ' + error.message;
+        });
+    });
+})();
+
+// Edit Product
+(function(){
+    var editModal = document.getElementById('editModal');
+    var closeEditBtn = document.getElementById('closeEditModal');
+
+    window.editProduct = function(id) {
+        var products = <?php echo json_encode($products); ?>;
+        var product = products.find(p => p.id == id);
+        if (product) {
+            document.getElementById('editId').value = product.id;
+            document.getElementById('editTitle').value = product.title || product.name;
+            document.getElementById('editDesc').value = product.desc || '';
+            document.getElementById('editPrice').value = product.price;
+            document.getElementById('editImg').value = product.img;
+            editModal.setAttribute('aria-hidden', 'false');
+        }
+    };
+
+    closeEditBtn.addEventListener('click', function(){
+        editModal.setAttribute('aria-hidden', 'true');
     });
 })();
 </script>
