@@ -5,7 +5,7 @@ ini_set('display_errors', 0);
 // For safety prefer exporting DATABASE_URL in your environment.
 
 // Example provided by user (will be used only if env var not set):
-$fallback = 'mysql://upadmin:AVNS_i6tNjDLSLM6RPUXvlTP@public-test-dgsyoehcssyt.db.upclouddatabases.com:11569/defaultdb?ssl-mode=REQUIRED';
+$fallback = 'mysql://admin:ml7xJlmbbeCqpBI9yGYc@database-2.cm94s2gqizfp.us-east-1.rds.amazonaws.com:3306/defaultdb?ssl-mode=REQUIRED';
 $databaseUrl = getenv('DATABASE_URL') ?: $fallback;
 
 // parse URL and query params
