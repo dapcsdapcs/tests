@@ -5,7 +5,7 @@ ini_set('display_errors', 0);
 // For safety prefer exporting DATABASE_URL in your environment.
 
 // Example provided by user (will be used only if env var not set):
-$fallback = 'mysql://admin:ml7xJlmbbeCqpBI9yGYc@database-2.cm94s2gqizfp.us-east-1.rds.amazonaws.com:3306/database-my?ssl-mode=REQUIRED';
+$fallback = 'mysql://admin:nurlan2005@demo-db.cm94s2gqizfp.us-east-1.rds.amazonaws.com:3306/database-my?ssl-mode=REQUIRED';
 $databaseUrl = getenv('DATABASE_URL') ?: $fallback;
 
 // parse URL and query params
